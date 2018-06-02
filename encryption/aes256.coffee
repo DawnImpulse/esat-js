@@ -36,20 +36,14 @@ crypto = require 'crypto'
   @param data - data to be encrypted
   @param callback - in case of promise kindly don't provide this
 ###
-exports.encrypt = (KEY, data, callback) ->
+exports.encrypt = (data, key, callback) ->
   if(callback)
-    try
-      encryptedData = encrypt(KEY, data)
-      callback(null, encryptedData)
-    catch error
-      callback(error, null)
+    encryptedData = encrypt(key, data)
+    callback(null, encryptedData)
   else
-    return new Promise((resolve, reject)->
-      try
-        encryptedData = encrypt(KEY, data)
-        resolve(encryptedData)
-      catch error
-        reject(error)
+    return new Promise((resolve, _)->
+      encryptedData = encrypt(key, data)
+      resolve(encryptedData)
     )
 
 ###
@@ -58,17 +52,17 @@ exports.encrypt = (KEY, data, callback) ->
   @param data - data to be decrypted
   @param callback - in case of promise kindly don't provide this
 ###
-exports.decrypt = (KEY, data, callback) ->
+exports.decrypt = (data, key, callback) ->
   if(callback)
     try
-      decryptedData = decrypt(KEY, data)
+      decryptedData = decrypt(key, data)
       callback(null, decryptedData)
     catch error
       callback(error, null)
   else
     return new Promise((resolve, reject)->
       try
-        decryptedData = decrypt(KEY, data)
+        decryptedData = decrypt(key, data)
         resolve(decryptedData)
       catch error
         reject(error)

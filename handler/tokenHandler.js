@@ -25,9 +25,14 @@
   @note Created on 2018-06-02 by Saksham
   @note Updates :
   */
-  var aes256;
+  /*
+  ----- PRIVATE -----
+  */
+  var aes256, errorH, tokenVerification;
 
   aes256 = require('../encryption/aes256');
+
+  errorH = require('../utils/errorHandler');
 
   /*
     Use to generate a new token
@@ -56,6 +61,50 @@
     } else {
       return aes256.encrypt(key, JSON.stringify(tokenData));
     }
+  };
+
+  /*
+    verify authentication token
+    @param token
+    @param key - decryption key
+    @param audiences - the audiences array
+    @param callback - not needed in case of promise
+  */
+  exports.verifyToken = function(token, key, audiences, callback) {
+    if (callback) {
+      return tokenVerification(token, key, audiences).then(function(tokenData) {
+        return callback(null, tokenData);
+      }).catch(function(error) {
+        return callback(error, null);
+      });
+    } else {
+      return tokenVerification(token, key, audiences);
+    }
+  };
+
+  tokenVerification = function(token, key, audiences) {
+    return new Promise(function(resolve, reject) {
+      return aes256.decrypt(token, key).then(function(data) {
+        var tokenData;
+        tokenData = JSON.parse(data);
+        if (tokenData.exp <= (new Date()).getTime()) {
+          return reject(errorH.tokenExpired());
+        } else if (tokenData.rint <= (new Date()).getTime()) {
+          return reject(errorH.tokenRefresh());
+        } else if (audiences.indexOf(tokenData.aud) === -1) {
+          return reject(errorH.invalidAudience());
+        } else {
+          return resolve(tokenData);
+        }
+      // catch for decryption
+      }).catch(function(error) {
+        if (error.toString().indexOf("06065064") > -1) {
+          return reject(errorH.invalidKey());
+        } else {
+          return reject(errorH.invalidToken());
+        }
+      });
+    });
   };
 
 }).call(this);

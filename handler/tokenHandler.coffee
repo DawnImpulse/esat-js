@@ -26,6 +26,7 @@ tokenHandler
 ###
 
 aes256 = require '../encryption/aes256'
+errorH = require '../utils/errorHandler'
 
 ###
   Use to generate a new token
@@ -55,5 +56,44 @@ exports.generateToken = (payload, audience, key, exp, rint, iss, callback) ->
     return aes256.encrypt(key, JSON.stringify(tokenData))
 
 
+###
+  verify authentication token
+  @param token
+  @param key - decryption key
+  @param audiences - the audiences array
+  @param callback - not needed in case of promise
+###
+exports.verifyToken = (token, key, audiences, callback) ->
+  if(callback)
+    tokenVerification(token, key, audiences).then((tokenData)->
+      callback(null, tokenData)
+    ).catch (error) ->
+      callback(error, null)
+  else
+    return tokenVerification(token, key, audiences)
+
+
+###
+----- PRIVATE -----
+###
+tokenVerification = (token, key, audiences) ->
+  new Promise((resolve, reject)->
+    aes256.decrypt(token, key).then((data)->
+      tokenData = JSON.parse(data)
+      if(tokenData.exp <= (new Date()).getTime())
+        reject errorH.tokenExpired()
+      else if(tokenData.rint <= (new Date()).getTime())
+        reject errorH.tokenRefresh()
+      else if(audiences.indexOf(tokenData.aud) is -1)
+        reject errorH.invalidAudience()
+      else
+        resolve tokenData
+# catch for decryption
+    ).catch (error) ->
+      if(error.toString().indexOf("06065064") > -1)
+        reject errorH.invalidKey()
+      else
+        reject errorH.invalidToken()
+  )
 
 

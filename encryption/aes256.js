@@ -38,25 +38,15 @@
     @param data - data to be encrypted
     @param callback - in case of promise kindly don't provide this
   */
-  exports.encrypt = function(KEY, data, callback) {
-    var encryptedData, error;
+  exports.encrypt = function(data, key, callback) {
+    var encryptedData;
     if (callback) {
-      try {
-        encryptedData = encrypt(KEY, data);
-        return callback(null, encryptedData);
-      } catch (error1) {
-        error = error1;
-        return callback(error, null);
-      }
+      encryptedData = encrypt(key, data);
+      return callback(null, encryptedData);
     } else {
-      return new Promise(function(resolve, reject) {
-        try {
-          encryptedData = encrypt(KEY, data);
-          return resolve(encryptedData);
-        } catch (error1) {
-          error = error1;
-          return reject(error);
-        }
+      return new Promise(function(resolve, _) {
+        encryptedData = encrypt(key, data);
+        return resolve(encryptedData);
       });
     }
   };
@@ -67,11 +57,11 @@
     @param data - data to be decrypted
     @param callback - in case of promise kindly don't provide this
   */
-  exports.decrypt = function(KEY, data, callback) {
+  exports.decrypt = function(data, key, callback) {
     var decryptedData, error;
     if (callback) {
       try {
-        decryptedData = decrypt(KEY, data);
+        decryptedData = decrypt(key, data);
         return callback(null, decryptedData);
       } catch (error1) {
         error = error1;
@@ -80,7 +70,7 @@
     } else {
       return new Promise(function(resolve, reject) {
         try {
-          decryptedData = decrypt(KEY, data);
+          decryptedData = decrypt(key, data);
           return resolve(decryptedData);
         } catch (error1) {
           error = error1;
