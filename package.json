@@ -1,0 +1,27 @@
+{
+  "name": "esat",
+  "version": "0.1.0",
+  "description": "Encrypted & Smart Authentication Token",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DawnImpulse/esat.git"
+  },
+  "keywords": [
+    "token",
+    "esat",
+    "esats",
+    "web-token",
+    "auth-token",
+    "authentication"
+  ],
+  "author": "DawnImpulse",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DawnImpulse/esat/issues"
+  },
+  "homepage": "https://github.com/DawnImpulse/esat#readme"
+}
