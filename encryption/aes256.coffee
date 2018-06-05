@@ -23,6 +23,7 @@ aes256
 
 @note Created on 2018-06-02 by Saksham
 @note Updates :
+  Saksham - 2018 06 05 - master - minor fix in key/data
 ###
 crypto = require 'crypto'
 
@@ -38,11 +39,11 @@ crypto = require 'crypto'
 ###
 exports.encrypt = (data, key, callback) ->
   if(callback)
-    encryptedData = encrypt(key, data)
+    encryptedData = encrypt(data, key)
     callback(null, encryptedData)
   else
     return new Promise((resolve, _)->
-      encryptedData = encrypt(key, data)
+      encryptedData = encrypt(data, key)
       resolve(encryptedData)
     )
 
@@ -55,14 +56,14 @@ exports.encrypt = (data, key, callback) ->
 exports.decrypt = (data, key, callback) ->
   if(callback)
     try
-      decryptedData = decrypt(key, data)
+      decryptedData = decrypt(data, key)
       callback(null, decryptedData)
     catch error
       callback(error, null)
   else
     return new Promise((resolve, reject)->
       try
-        decryptedData = decrypt(key, data)
+        decryptedData = decrypt(data, key)
         resolve(decryptedData)
       catch error
         reject(error)
@@ -73,15 +74,15 @@ exports.decrypt = (data, key, callback) ->
 ###
 
 # the encryption function
-encrypt = (KEY, data) ->
-  cipher = crypto.createCipher('aes256', KEY)
+encrypt = (data, key) ->
+  cipher = crypto.createCipher('aes256', key)
   encrypted = cipher.update(data, 'utf8', 'hex')
   encrypted += cipher.final('hex')
   encrypted
 
 # aes decryption function
-decrypt = (KEY, data) ->
-  decipher = crypto.createDecipher('aes256', KEY)
+decrypt = (data, key) ->
+  decipher = crypto.createDecipher('aes256', key)
   decrypted = decipher.update(data, 'hex', 'utf8')
   decrypted += decipher.final('utf8')
   decrypted

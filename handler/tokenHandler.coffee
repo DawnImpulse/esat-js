@@ -23,6 +23,7 @@ tokenHandler
      
 @note Created on 2018-06-02 by Saksham
 @note Updates :
+  Saksham - 2018 06 05 - master - token refresh handling
 ###
 
 aes256 = require '../encryption/aes256'
@@ -38,23 +39,22 @@ errorH = require '../utils/errorHandler'
   @param iss - token issuer
   @param callback - not needed in case of promise
 ###
-exports.generateToken = (payload, audience, key, exp, rint, iss, callback) ->
+exports.generateToken = (payload, key, audience, exp, rint, iss, callback) ->
   currentMilli = (new Date).getTime() # current time in milli from epoch
 
   tokenData =
     aud: audience
     iss: iss
     iat: currentMilli
-    rint: currentMilli + rint
+    rat: currentMilli + rint
     exp: currentMilli + exp
-    rat: currentMilli
+    lrt: currentMilli
     payload: payload
 
   if(callback)
-    aes256.encrypt(key, JSON.stringify(tokenData), callback)
+    aes256.encrypt(JSON.stringify(tokenData), key, callback)
   else
-    return aes256.encrypt(key, JSON.stringify(tokenData))
-
+    return aes256.encrypt(JSON.stringify(tokenData), key)
 
 ###
   verify authentication token
@@ -72,17 +72,32 @@ exports.verifyToken = (token, key, audiences, callback) ->
   else
     return tokenVerification(token, key, audiences)
 
+###
+  refreshing authentication token
+  @param oldToken - previous interval expired token
+  @param key
+  @param callback - not needed in case of promise
+###
+exports.refreshToken = (oldToken, key, callback) ->
+  if callback
+    tokenRefresh(oldToken, key).then((token)->
+      callback(null, token)
+    ).catch (error) ->
+      callback(error, null)
+  else
+    return tokenRefresh(oldToken, key)
 
 ###
 ----- PRIVATE -----
 ###
+
 tokenVerification = (token, key, audiences) ->
   new Promise((resolve, reject)->
     aes256.decrypt(token, key).then((data)->
       tokenData = JSON.parse(data)
       if(tokenData.exp <= (new Date()).getTime())
         reject errorH.tokenExpired()
-      else if(tokenData.rint <= (new Date()).getTime())
+      else if(tokenData.rat <= (new Date()).getTime())
         reject errorH.tokenRefresh()
       else if(audiences.indexOf(tokenData.aud) is -1)
         reject errorH.invalidAudience()
@@ -96,4 +111,30 @@ tokenVerification = (token, key, audiences) ->
         reject errorH.invalidToken()
   )
 
+tokenRefresh = (token, key) ->
+  new Promise((resolve, reject)->
+    aes256.decrypt(token, key).then((decoded)->
+      currentMilli = (new Date).getTime() # current time in milli from epoch
 
+      decoded = JSON.parse(decoded)
+      if(decoded.exp <= currentMilli)
+        reject errorH.tokenExpired()
+      else
+        tokenData =
+          aud: decoded.aud
+          iss: decoded.iss
+          iat: decoded.iat
+          rat: currentMilli + (decoded.rat - decoded.iat)
+          exp: decoded.exp
+          lrt: currentMilli
+          payload: decoded.payload
+
+        aes256.encrypt(JSON.stringify(tokenData), key).then((tokenR)->
+          resolve tokenR
+        )
+    ).catch (error)->
+      if(error.toString().indexOf("06065064") > -1)
+        reject errorH.invalidKey()
+      else
+        reject errorH.invalidToken()
+  )

@@ -24,6 +24,7 @@
 
   @note Created on 2018-06-02 by Saksham
   @note Updates :
+    Saksham - 2018 06 05 - master - minor fix in key/data
   */
   var crypto, decrypt, encrypt;
 
@@ -41,11 +42,11 @@
   exports.encrypt = function(data, key, callback) {
     var encryptedData;
     if (callback) {
-      encryptedData = encrypt(key, data);
+      encryptedData = encrypt(data, key);
       return callback(null, encryptedData);
     } else {
       return new Promise(function(resolve, _) {
-        encryptedData = encrypt(key, data);
+        encryptedData = encrypt(data, key);
         return resolve(encryptedData);
       });
     }
@@ -61,7 +62,7 @@
     var decryptedData, error;
     if (callback) {
       try {
-        decryptedData = decrypt(key, data);
+        decryptedData = decrypt(data, key);
         return callback(null, decryptedData);
       } catch (error1) {
         error = error1;
@@ -70,7 +71,7 @@
     } else {
       return new Promise(function(resolve, reject) {
         try {
-          decryptedData = decrypt(key, data);
+          decryptedData = decrypt(data, key);
           return resolve(decryptedData);
         } catch (error1) {
           error = error1;
@@ -84,18 +85,18 @@
   ----- PRIVATE -----
   */
   // the encryption function
-  encrypt = function(KEY, data) {
+  encrypt = function(data, key) {
     var cipher, encrypted;
-    cipher = crypto.createCipher('aes256', KEY);
+    cipher = crypto.createCipher('aes256', key);
     encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return encrypted;
   };
 
   // aes decryption function
-  decrypt = function(KEY, data) {
+  decrypt = function(data, key) {
     var decipher, decrypted;
-    decipher = crypto.createDecipher('aes256', KEY);
+    decipher = crypto.createDecipher('aes256', key);
     decrypted = decipher.update(data, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;

@@ -24,11 +24,12 @@
 
   @note Created on 2018-06-02 by Saksham
   @note Updates :
+    Saksham - 2018 06 05 - master - token refresh handling
   */
   /*
   ----- PRIVATE -----
   */
-  var aes256, errorH, tokenVerification;
+  var aes256, errorH, tokenRefresh, tokenVerification;
 
   aes256 = require('../encryption/aes256');
 
@@ -44,22 +45,22 @@
     @param iss - token issuer
     @param callback - not needed in case of promise
   */
-  exports.generateToken = function(payload, audience, key, exp, rint, iss, callback) {
+  exports.generateToken = function(payload, key, audience, exp, rint, iss, callback) {
     var currentMilli, tokenData;
     currentMilli = (new Date).getTime(); // current time in milli from epoch
     tokenData = {
       aud: audience,
       iss: iss,
       iat: currentMilli,
-      rint: currentMilli + rint,
+      rat: currentMilli + rint,
       exp: currentMilli + exp,
-      rat: currentMilli,
+      lrt: currentMilli,
       payload: payload
     };
     if (callback) {
-      return aes256.encrypt(key, JSON.stringify(tokenData), callback);
+      return aes256.encrypt(JSON.stringify(tokenData), key, callback);
     } else {
-      return aes256.encrypt(key, JSON.stringify(tokenData));
+      return aes256.encrypt(JSON.stringify(tokenData), key);
     }
   };
 
@@ -82,6 +83,24 @@
     }
   };
 
+  /*
+    refreshing authentication token
+    @param oldToken - previous interval expired token
+    @param key
+    @param callback - not needed in case of promise
+  */
+  exports.refreshToken = function(oldToken, key, callback) {
+    if (callback) {
+      return tokenRefresh(oldToken, key).then(function(token) {
+        return callback(null, token);
+      }).catch(function(error) {
+        return callback(error, null);
+      });
+    } else {
+      return tokenRefresh(oldToken, key);
+    }
+  };
+
   tokenVerification = function(token, key, audiences) {
     return new Promise(function(resolve, reject) {
       return aes256.decrypt(token, key).then(function(data) {
@@ -89,7 +108,7 @@
         tokenData = JSON.parse(data);
         if (tokenData.exp <= (new Date()).getTime()) {
           return reject(errorH.tokenExpired());
-        } else if (tokenData.rint <= (new Date()).getTime()) {
+        } else if (tokenData.rat <= (new Date()).getTime()) {
           return reject(errorH.tokenRefresh());
         } else if (audiences.indexOf(tokenData.aud) === -1) {
           return reject(errorH.invalidAudience());
@@ -97,6 +116,38 @@
           return resolve(tokenData);
         }
       // catch for decryption
+      }).catch(function(error) {
+        if (error.toString().indexOf("06065064") > -1) {
+          return reject(errorH.invalidKey());
+        } else {
+          return reject(errorH.invalidToken());
+        }
+      });
+    });
+  };
+
+  tokenRefresh = function(token, key) {
+    return new Promise(function(resolve, reject) {
+      return aes256.decrypt(token, key).then(function(decoded) {
+        var currentMilli, tokenData;
+        currentMilli = (new Date).getTime(); // current time in milli from epoch
+        decoded = JSON.parse(decoded);
+        if (decoded.exp <= currentMilli) {
+          return reject(errorH.tokenExpired());
+        } else {
+          tokenData = {
+            aud: decoded.aud,
+            iss: decoded.iss,
+            iat: decoded.iat,
+            rat: currentMilli + (decoded.rat - decoded.iat),
+            exp: decoded.exp,
+            lrt: currentMilli,
+            payload: decoded.payload
+          };
+          return aes256.encrypt(JSON.stringify(tokenData), key).then(function(tokenR) {
+            return resolve(tokenR);
+          });
+        }
       }).catch(function(error) {
         if (error.toString().indexOf("06065064") > -1) {
           return reject(errorH.invalidKey());
