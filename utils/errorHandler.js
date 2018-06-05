@@ -24,6 +24,7 @@
 
   @note Created on 2018-06-02 by Saksham
   @note Updates :
+    Saksham - 2018 06 05 - master - key not provided
   */
   var C;
 
@@ -65,7 +66,23 @@
   exports.invalidAudience = function() {
     return {
       code: C.INVALID_AUDIENCE,
-      message: "invalid audience"
+      message: "invalid audiences"
+    };
+  };
+
+  // key not provided
+  exports.keyNotProvided = function() {
+    return {
+      code: C.KEY_NOT_PROVIDED,
+      message: "key not provided"
+    };
+  };
+
+  // audience not provided
+  exports.audiencesNotProvided = function() {
+    return {
+      code: C.AUDIENCES_NOT_PROVIDED,
+      message: "audiences not provided"
     };
   };
 

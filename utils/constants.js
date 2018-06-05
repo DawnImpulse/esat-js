@@ -35,6 +35,10 @@
 
   exports.INVALID_AUDIENCE = 5;
 
+  exports.KEY_NOT_PROVIDED = 6;
+
+  exports.AUDIENCES_NOT_PROVIDED = 6;
+
 }).call(this);
 
 //# sourceMappingURL=constants.js.map

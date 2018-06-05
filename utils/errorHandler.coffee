@@ -23,6 +23,7 @@ errorHandler
      
 @note Created on 2018-06-02 by Saksham
 @note Updates :
+  Saksham - 2018 06 05 - master - key not provided
 ###
 C = require './constants'
 
@@ -58,5 +59,19 @@ exports.tokenRefresh = () ->
 exports.invalidAudience = () ->
   {
     code: C.INVALID_AUDIENCE
-    message: "invalid audience"
+    message: "invalid audiences"
+  }
+
+# key not provided
+exports.keyNotProvided = () ->
+  {
+    code: C.KEY_NOT_PROVIDED
+    message: "key not provided"
+  }
+
+# audience not provided
+exports.audiencesNotProvided = () ->
+  {
+    code: C.AUDIENCES_NOT_PROVIDED
+    message: "audiences not provided"
   }

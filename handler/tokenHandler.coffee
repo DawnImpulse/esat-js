@@ -31,22 +31,22 @@ errorH = require '../utils/errorHandler'
 
 ###
   Use to generate a new token
-  @param payload - any data to save (string/number/json)
-  @param audience - a single audience id
+  @param payload - any data to save (string/number/json) - empty json by default
   @param key - the encryption key
-  @param exp - the token expiry in milliseconds
-  @param rint - token refresh interval
+  @param exp - the token expiry in milliseconds - 1 year by default
+  @param rat - token refresh interval/at - 1 hour by default
   @param iss - token issuer
+  @param aud - a single audience id
   @param callback - not needed in case of promise
 ###
-exports.generateToken = (payload, key, audience, exp, rint, iss, callback) ->
+exports.generateToken = (payload, key, exp = 31540000000, rat = 3600000, iss, aud, callback) ->
   currentMilli = (new Date).getTime() # current time in milli from epoch
 
   tokenData =
-    aud: audience
+    aud: aud
     iss: iss
     iat: currentMilli
-    rat: currentMilli + rint
+    rat: currentMilli + rat
     exp: currentMilli + exp
     lrt: currentMilli
     payload: payload
@@ -99,8 +99,13 @@ tokenVerification = (token, key, audiences) ->
         reject errorH.tokenExpired()
       else if(tokenData.rat <= (new Date()).getTime())
         reject errorH.tokenRefresh()
-      else if(audiences.indexOf(tokenData.aud) is -1)
-        reject errorH.invalidAudience()
+      else if(tokenData.aud)
+        if(!audiences)
+          reject errorH.audiencesNotProvided()
+        else if(audiences.indexOf(tokenData.aud) is -1)
+          reject errorH.invalidAudience()
+        else
+          resolve tokenData
       else
         resolve tokenData
 # catch for decryption

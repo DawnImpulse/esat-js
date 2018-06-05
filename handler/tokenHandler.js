@@ -37,22 +37,22 @@
 
   /*
     Use to generate a new token
-    @param payload - any data to save (string/number/json)
-    @param audience - a single audience id
+    @param payload - any data to save (string/number/json) - empty json by default
     @param key - the encryption key
-    @param exp - the token expiry in milliseconds
-    @param rint - token refresh interval
+    @param exp - the token expiry in milliseconds - 1 year by default
+    @param rat - token refresh interval/at - 1 hour by default
     @param iss - token issuer
+    @param aud - a single audience id
     @param callback - not needed in case of promise
   */
-  exports.generateToken = function(payload, key, audience, exp, rint, iss, callback) {
+  exports.generateToken = function(payload, key, exp = 31540000000, rat = 3600000, iss, aud, callback) {
     var currentMilli, tokenData;
     currentMilli = (new Date).getTime(); // current time in milli from epoch
     tokenData = {
-      aud: audience,
+      aud: aud,
       iss: iss,
       iat: currentMilli,
-      rat: currentMilli + rint,
+      rat: currentMilli + rat,
       exp: currentMilli + exp,
       lrt: currentMilli,
       payload: payload
@@ -110,8 +110,14 @@
           return reject(errorH.tokenExpired());
         } else if (tokenData.rat <= (new Date()).getTime()) {
           return reject(errorH.tokenRefresh());
-        } else if (audiences.indexOf(tokenData.aud) === -1) {
-          return reject(errorH.invalidAudience());
+        } else if (tokenData.aud) {
+          if (!audiences) {
+            return reject(errorH.audiencesNotProvided());
+          } else if (audiences.indexOf(tokenData.aud) === -1) {
+            return reject(errorH.invalidAudience());
+          } else {
+            return resolve(tokenData);
+          }
         } else {
           return resolve(tokenData);
         }
