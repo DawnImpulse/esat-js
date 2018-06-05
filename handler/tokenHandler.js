@@ -74,9 +74,9 @@
   exports.verifyToken = function(token, key, audiences, callback) {
     if (callback) {
       return tokenVerification(token, key, audiences).then(function(tokenData) {
-        return callback(null, tokenData);
+        return callback(void 0, tokenData);
       }).catch(function(error) {
-        return callback(error, null);
+        return callback(error, void 0);
       });
     } else {
       return tokenVerification(token, key, audiences);
@@ -92,9 +92,9 @@
   exports.refreshToken = function(oldToken, key, callback) {
     if (callback) {
       return tokenRefresh(oldToken, key).then(function(token) {
-        return callback(null, token);
+        return callback(void 0, token);
       }).catch(function(error) {
-        return callback(error, null);
+        return callback(error, void 0);
       });
     } else {
       return tokenRefresh(oldToken, key);

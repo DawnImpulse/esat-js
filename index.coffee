@@ -41,7 +41,7 @@ errorHandler = require './utils/errorHandler'
 exports.generate = (options, key, callback) ->
   if(callback)
     if(!key)
-      callback(errorHandler.keyNotProvided(), null)
+      callback(errorHandler.keyNotProvided(), undefined )
     else
       tokenHandler.generateToken(options.payload, key, options.exp, options.rat, options.iss, options.aud, callback)
   else
@@ -62,7 +62,7 @@ exports.generate = (options, key, callback) ->
 exports.verify = (token, key, audiences, callback) ->
   if callback
     if !key
-      callback errorHandler.keyNotProvided(), null
+      callback errorHandler.keyNotProvided(), undefined
     else
       tokenHandler.verifyToken(token, key, audiences, callback)
   else
@@ -72,3 +72,23 @@ exports.verify = (token, key, audiences, callback) ->
       )
     else
       return tokenHandler.verifyToken(token, key, audiences)
+
+###
+  refresh a token (if not expired completely)
+  @param oldToken - old token
+  @param key - encryption key
+  @param callback - not needed in case of promise
+###
+exports.refresh = (oldToken, key, callback) ->
+  if callback
+    if !key
+      callback errorHandler.keyNotProvided(), undefined
+    else
+      tokenHandler.refreshToken(oldToken, key, callback)
+  else
+    if !key
+      return new Promise((resolve,reject)->
+        reject errorHandler.keyNotProvided()
+      )
+    else
+      return tokenHandler.refreshToken(oldToken, key)

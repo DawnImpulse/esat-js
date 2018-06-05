@@ -40,7 +40,7 @@ crypto = require 'crypto'
 exports.encrypt = (data, key, callback) ->
   if(callback)
     encryptedData = encrypt(data, key)
-    callback(null, encryptedData)
+    callback(undefined, encryptedData)
   else
     return new Promise((resolve, _)->
       encryptedData = encrypt(data, key)
@@ -57,9 +57,9 @@ exports.decrypt = (data, key, callback) ->
   if(callback)
     try
       decryptedData = decrypt(data, key)
-      callback(null, decryptedData)
+      callback(undefined , decryptedData)
     catch error
-      callback(error, null)
+      callback(error, undefined )
   else
     return new Promise((resolve, reject)->
       try

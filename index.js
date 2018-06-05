@@ -45,7 +45,7 @@
   exports.generate = function(options, key, callback) {
     if (callback) {
       if (!key) {
-        return callback(errorHandler.keyNotProvided(), null);
+        return callback(errorHandler.keyNotProvided(), void 0);
       } else {
         return tokenHandler.generateToken(options.payload, key, options.exp, options.rat, options.iss, options.aud, callback);
       }
@@ -70,7 +70,7 @@
   exports.verify = function(token, key, audiences, callback) {
     if (callback) {
       if (!key) {
-        return callback(errorHandler.keyNotProvided(), null);
+        return callback(errorHandler.keyNotProvided(), void 0);
       } else {
         return tokenHandler.verifyToken(token, key, audiences, callback);
       }
@@ -81,6 +81,30 @@
         });
       } else {
         return tokenHandler.verifyToken(token, key, audiences);
+      }
+    }
+  };
+
+  /*
+    refresh a token (if not expired completely)
+    @param oldToken - old token
+    @param key - encryption key
+    @param callback - not needed in case of promise
+  */
+  exports.refresh = function(oldToken, key, callback) {
+    if (callback) {
+      if (!key) {
+        return callback(errorHandler.keyNotProvided(), void 0);
+      } else {
+        return tokenHandler.refreshToken(oldToken, key, callback);
+      }
+    } else {
+      if (!key) {
+        return new Promise(function(resolve, reject) {
+          return reject(errorHandler.keyNotProvided());
+        });
+      } else {
+        return tokenHandler.refreshToken(oldToken, key);
       }
     }
   };

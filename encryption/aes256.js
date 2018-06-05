@@ -43,7 +43,7 @@
     var encryptedData;
     if (callback) {
       encryptedData = encrypt(data, key);
-      return callback(null, encryptedData);
+      return callback(void 0, encryptedData);
     } else {
       return new Promise(function(resolve, _) {
         encryptedData = encrypt(data, key);
@@ -63,10 +63,10 @@
     if (callback) {
       try {
         decryptedData = decrypt(data, key);
-        return callback(null, decryptedData);
+        return callback(void 0, decryptedData);
       } catch (error1) {
         error = error1;
-        return callback(error, null);
+        return callback(error, void 0);
       }
     } else {
       return new Promise(function(resolve, reject) {

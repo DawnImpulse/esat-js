@@ -66,9 +66,9 @@ exports.generateToken = (payload, key, exp = 31540000000, rat = 3600000, iss, au
 exports.verifyToken = (token, key, audiences, callback) ->
   if(callback)
     tokenVerification(token, key, audiences).then((tokenData)->
-      callback(null, tokenData)
+      callback(undefined , tokenData)
     ).catch (error) ->
-      callback(error, null)
+      callback(error, undefined )
   else
     return tokenVerification(token, key, audiences)
 
@@ -81,9 +81,9 @@ exports.verifyToken = (token, key, audiences, callback) ->
 exports.refreshToken = (oldToken, key, callback) ->
   if callback
     tokenRefresh(oldToken, key).then((token)->
-      callback(null, token)
+      callback(undefined , token)
     ).catch (error) ->
-      callback(error, null)
+      callback(error, undefined )
   else
     return tokenRefresh(oldToken, key)
 
