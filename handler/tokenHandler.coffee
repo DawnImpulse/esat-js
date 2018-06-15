@@ -36,14 +36,12 @@ errorH = require '../utils/errorHandler'
   @param exp - the token expiry in milliseconds - 1 year by default
   @param rat - token refresh interval/at - 1 hour by default
   @param iss - token issuer
-  @param aud - a single audience id
   @param callback - not needed in case of promise
 ###
-exports.generateToken = (payload, key, exp = 31540000000, rat = 3600000, iss, aud, callback) ->
+exports.generateToken = (payload, key, exp = 31540000000, rat = 3600000, iss, callback) ->
   currentMilli = (new Date).getTime() # current time in milli from epoch
 
   tokenData =
-    aud: aud
     iss: iss
     iat: currentMilli
     rat: currentMilli + rat
@@ -60,17 +58,16 @@ exports.generateToken = (payload, key, exp = 31540000000, rat = 3600000, iss, au
   verify authentication token
   @param token
   @param key - decryption key
-  @param audiences - the audiences array
   @param callback - not needed in case of promise
 ###
-exports.verifyToken = (token, key, audiences, callback) ->
+exports.verifyToken = (token, key, callback) ->
   if(callback)
-    tokenVerification(token, key, audiences).then((tokenData)->
+    tokenVerification(token, key).then((tokenData)->
       callback(undefined , tokenData)
     ).catch (error) ->
       callback(error, undefined )
   else
-    return tokenVerification(token, key, audiences)
+    return tokenVerification(token, key)
 
 ###
   refreshing authentication token
@@ -91,7 +88,7 @@ exports.refreshToken = (oldToken, key, callback) ->
 ----- PRIVATE -----
 ###
 
-tokenVerification = (token, key, audiences) ->
+tokenVerification = (token, key) ->
   new Promise((resolve, reject)->
     aes256.decrypt(token, key).then((data)->
       tokenData = JSON.parse(data)
@@ -99,13 +96,6 @@ tokenVerification = (token, key, audiences) ->
         reject errorH.tokenExpired()
       else if(tokenData.rat <= (new Date()).getTime())
         reject errorH.tokenRefresh()
-      else if(tokenData.aud)
-        if(!audiences)
-          reject errorH.audiencesNotProvided()
-        else if(audiences.indexOf(tokenData.aud) is -1)
-          reject errorH.invalidAudience()
-        else
-          resolve tokenData
       else
         resolve tokenData
 # catch for decryption
@@ -126,7 +116,6 @@ tokenRefresh = (token, key) ->
         reject errorH.tokenExpired()
       else
         tokenData =
-          aud: decoded.aud
           iss: decoded.iss
           iat: decoded.iat
           rat: currentMilli + (decoded.rat - decoded.iat)

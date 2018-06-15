@@ -32,46 +32,44 @@ errorHandler = require './utils/errorHandler'
   @param options - as name suggests this parameter contains all the extra options required for generating token
                    1. exp - token expiry (milliseconds) - default 1 year
                    2. rat - token refresh interval/at (milliseconds) - default 1 hour
-                   3. aud - token audience
-                   4. iss - token issuer
-                   5. payload - additional json object/json array
+                   3. iss - token issuer
+                   4. payload - additional json object/json array
   @param key - encryption key
   @param callback - not required in case of promise
 ###
 exports.generate = (options, key, callback) ->
   if(callback)
     if(!key)
-      callback(errorHandler.keyNotProvided(), undefined )
+      callback(errorHandler.keyNotProvided(), undefined)
     else
-      tokenHandler.generateToken(options.payload, key, options.exp, options.rat, options.iss, options.aud, callback)
+      tokenHandler.generateToken(options.payload, key, options.exp, options.rat, options.iss, callback)
   else
     if(!key)
       return new Promise((resolve, reject)->
         reject errorHandler.keyNotProvided()
       )
     else
-      return tokenHandler.generateToken(options.payload, key, options.exp, options.rat, options.iss, options.aud)
+      return tokenHandler.generateToken(options.payload, key, options.exp, options.rat, options.iss)
 
 ###
   verify a token
   @param token - the generated token
   @param key - encryption key
-  @param audiences - provide a json array of audiences only if given during token generation
   @param callback - not required in case of promise
 ###
-exports.verify = (token, key, audiences, callback) ->
+exports.verify = (token, key, callback) ->
   if callback
     if !key
       callback errorHandler.keyNotProvided(), undefined
     else
-      tokenHandler.verifyToken(token, key, audiences, callback)
+      tokenHandler.verifyToken(token, key, callback)
   else
     if !key
       return new Promise((resolve, reject)->
         reject errorHandler.keyNotProvided()
       )
     else
-      return tokenHandler.verifyToken(token, key, audiences)
+      return tokenHandler.verifyToken(token, key)
 
 ###
   refresh a token (if not expired completely)
@@ -87,7 +85,7 @@ exports.refresh = (oldToken, key, callback) ->
       tokenHandler.refreshToken(oldToken, key, callback)
   else
     if !key
-      return new Promise((resolve,reject)->
+      return new Promise((resolve, reject)->
         reject errorHandler.keyNotProvided()
       )
     else

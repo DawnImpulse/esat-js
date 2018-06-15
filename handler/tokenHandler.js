@@ -42,14 +42,12 @@
     @param exp - the token expiry in milliseconds - 1 year by default
     @param rat - token refresh interval/at - 1 hour by default
     @param iss - token issuer
-    @param aud - a single audience id
     @param callback - not needed in case of promise
   */
-  exports.generateToken = function(payload, key, exp = 31540000000, rat = 3600000, iss, aud, callback) {
+  exports.generateToken = function(payload, key, exp = 31540000000, rat = 3600000, iss, callback) {
     var currentMilli, tokenData;
     currentMilli = (new Date).getTime(); // current time in milli from epoch
     tokenData = {
-      aud: aud,
       iss: iss,
       iat: currentMilli,
       rat: currentMilli + rat,
@@ -68,18 +66,17 @@
     verify authentication token
     @param token
     @param key - decryption key
-    @param audiences - the audiences array
     @param callback - not needed in case of promise
   */
-  exports.verifyToken = function(token, key, audiences, callback) {
+  exports.verifyToken = function(token, key, callback) {
     if (callback) {
-      return tokenVerification(token, key, audiences).then(function(tokenData) {
+      return tokenVerification(token, key).then(function(tokenData) {
         return callback(void 0, tokenData);
       }).catch(function(error) {
         return callback(error, void 0);
       });
     } else {
-      return tokenVerification(token, key, audiences);
+      return tokenVerification(token, key);
     }
   };
 
@@ -101,7 +98,7 @@
     }
   };
 
-  tokenVerification = function(token, key, audiences) {
+  tokenVerification = function(token, key) {
     return new Promise(function(resolve, reject) {
       return aes256.decrypt(token, key).then(function(data) {
         var tokenData;
@@ -110,14 +107,6 @@
           return reject(errorH.tokenExpired());
         } else if (tokenData.rat <= (new Date()).getTime()) {
           return reject(errorH.tokenRefresh());
-        } else if (tokenData.aud) {
-          if (!audiences) {
-            return reject(errorH.audiencesNotProvided());
-          } else if (audiences.indexOf(tokenData.aud) === -1) {
-            return reject(errorH.invalidAudience());
-          } else {
-            return resolve(tokenData);
-          }
         } else {
           return resolve(tokenData);
         }
@@ -142,7 +131,6 @@
           return reject(errorH.tokenExpired());
         } else {
           tokenData = {
-            aud: decoded.aud,
             iss: decoded.iss,
             iat: decoded.iat,
             rat: currentMilli + (decoded.rat - decoded.iat),
