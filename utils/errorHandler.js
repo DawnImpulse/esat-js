@@ -25,6 +25,7 @@
   @note Created on 2018-06-02 by Saksham
   @note Updates :
     Saksham - 2018 06 05 - master - key not provided
+    Saksham - 2018 06 18 - master - rtk in refresh
   */
   var C;
 
@@ -54,11 +55,12 @@
     };
   };
 
-  // token should be expired
-  exports.tokenRefresh = function() {
+  // token should be refreshed
+  exports.tokenRefresh = function(rtk) {
     return {
       code: C.TOKEN_REFRESH_TIME,
-      message: "Token should be refreshed"
+      message: "Token should be refreshed",
+      rtk: rtk
     };
   };
 

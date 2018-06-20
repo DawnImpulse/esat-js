@@ -33,8 +33,8 @@
 
   /*
     generate a new token
-    @param options - as name suggests this parameter contains all the extra options required for generating token
-                     1. exp - token expiry (milliseconds) - default 1 year
+    @param options - as name suggests this parameter contains all the extra options for generating token (optional)
+                     1. exp - token expiry (milliseconds) - default 1 day
                      2. rat - token refresh interval/at (milliseconds) - default 1 hour
                      3. iss - token issuer
                      4. payload - additional json object/json array

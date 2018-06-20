@@ -24,10 +24,12 @@ tokenHandler
 @note Created on 2018-06-02 by Saksham
 @note Updates :
   Saksham - 2018 06 05 - master - token refresh handling
+  Saksham - 2018 06 18 - master - adding refresh token
 ###
 
 aes256 = require '../encryption/aes256'
 errorH = require '../utils/errorHandler'
+utils = require '../utils/utilities'
 
 ###
   Use to generate a new token
@@ -38,21 +40,32 @@ errorH = require '../utils/errorHandler'
   @param iss - token issuer
   @param callback - not needed in case of promise
 ###
-exports.generateToken = (payload, key, exp = 31540000000, rat = 3600000, iss, callback) ->
+exports.generateToken = (payload, key, exp = 86400000, rat = 3600000, iss, callback) ->
   currentMilli = (new Date).getTime() # current time in milli from epoch
 
+  rtk = utils.uuid()
+
   tokenData =
-    iss: iss
     iat: currentMilli
     rat: currentMilli + rat
     exp: currentMilli + exp
     lrt: currentMilli
+    iss: iss
+    rtk: rtk
     payload: payload
 
   if(callback)
-    aes256.encrypt(JSON.stringify(tokenData), key, callback)
+    aes256.encrypt(JSON.stringify(tokenData), key).then((token)->
+      callback(null, {token: token, rtk: rtk})
+    ).catch (error) ->
+      callback(error, null)
   else
-    return aes256.encrypt(JSON.stringify(tokenData), key)
+    return new Promise((resolve, reject) ->
+      aes256.encrypt(JSON.stringify(tokenData), key).then((token) ->
+        resolve({token: token, rtk: rtk})
+      ).catch (error) ->
+        reject(error)
+    )
 
 ###
   verify authentication token
@@ -63,9 +76,9 @@ exports.generateToken = (payload, key, exp = 31540000000, rat = 3600000, iss, ca
 exports.verifyToken = (token, key, callback) ->
   if(callback)
     tokenVerification(token, key).then((tokenData)->
-      callback(undefined , tokenData)
+      callback(undefined, tokenData)
     ).catch (error) ->
-      callback(error, undefined )
+      callback(error, undefined)
   else
     return tokenVerification(token, key)
 
@@ -78,9 +91,9 @@ exports.verifyToken = (token, key, callback) ->
 exports.refreshToken = (oldToken, key, callback) ->
   if callback
     tokenRefresh(oldToken, key).then((token)->
-      callback(undefined , token)
+      callback(undefined, token)
     ).catch (error) ->
-      callback(error, undefined )
+      callback(error, undefined)
   else
     return tokenRefresh(oldToken, key)
 
@@ -95,7 +108,7 @@ tokenVerification = (token, key) ->
       if(tokenData.exp <= (new Date()).getTime())
         reject errorH.tokenExpired()
       else if(tokenData.rat <= (new Date()).getTime())
-        reject errorH.tokenRefresh()
+        reject errorH.tokenRefresh(tokenData.rtk)
       else
         resolve tokenData
 # catch for decryption
@@ -116,11 +129,12 @@ tokenRefresh = (token, key) ->
         reject errorH.tokenExpired()
       else
         tokenData =
-          iss: decoded.iss
           iat: decoded.iat
           rat: currentMilli + (decoded.rat - decoded.iat)
           exp: decoded.exp
           lrt: currentMilli
+          iss: decoded.iss
+          rtk: decoded.rtk
           payload: decoded.payload
 
         aes256.encrypt(JSON.stringify(tokenData), key).then((tokenR)->

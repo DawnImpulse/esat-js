@@ -25,15 +25,18 @@
   @note Created on 2018-06-02 by Saksham
   @note Updates :
     Saksham - 2018 06 05 - master - token refresh handling
+    Saksham - 2018 06 18 - master - adding refresh token
   */
   /*
   ----- PRIVATE -----
   */
-  var aes256, errorH, tokenRefresh, tokenVerification;
+  var aes256, errorH, tokenRefresh, tokenVerification, utils;
 
   aes256 = require('../encryption/aes256');
 
   errorH = require('../utils/errorHandler');
+
+  utils = require('../utils/utilities');
 
   /*
     Use to generate a new token
@@ -44,21 +47,39 @@
     @param iss - token issuer
     @param callback - not needed in case of promise
   */
-  exports.generateToken = function(payload, key, exp = 31540000000, rat = 3600000, iss, callback) {
-    var currentMilli, tokenData;
+  exports.generateToken = function(payload, key, exp = 86400000, rat = 3600000, iss, callback) {
+    var currentMilli, rtk, tokenData;
     currentMilli = (new Date).getTime(); // current time in milli from epoch
+    rtk = utils.uuid();
     tokenData = {
-      iss: iss,
       iat: currentMilli,
       rat: currentMilli + rat,
       exp: currentMilli + exp,
       lrt: currentMilli,
+      iss: iss,
+      rtk: rtk,
       payload: payload
     };
     if (callback) {
-      return aes256.encrypt(JSON.stringify(tokenData), key, callback);
+      return aes256.encrypt(JSON.stringify(tokenData), key).then(function(token) {
+        return callback(null, {
+          token: token,
+          rtk: rtk
+        });
+      }).catch(function(error) {
+        return callback(error, null);
+      });
     } else {
-      return aes256.encrypt(JSON.stringify(tokenData), key);
+      return new Promise(function(resolve, reject) {
+        return aes256.encrypt(JSON.stringify(tokenData), key).then(function(token) {
+          return resolve({
+            token: token,
+            rtk: rtk
+          });
+        }).catch(function(error) {
+          return reject(error);
+        });
+      });
     }
   };
 
@@ -106,7 +127,7 @@
         if (tokenData.exp <= (new Date()).getTime()) {
           return reject(errorH.tokenExpired());
         } else if (tokenData.rat <= (new Date()).getTime()) {
-          return reject(errorH.tokenRefresh());
+          return reject(errorH.tokenRefresh(tokenData.rtk));
         } else {
           return resolve(tokenData);
         }
@@ -131,11 +152,12 @@
           return reject(errorH.tokenExpired());
         } else {
           tokenData = {
-            iss: decoded.iss,
             iat: decoded.iat,
             rat: currentMilli + (decoded.rat - decoded.iat),
             exp: decoded.exp,
             lrt: currentMilli,
+            iss: decoded.iss,
+            rtk: decoded.rtk,
             payload: decoded.payload
           };
           return aes256.encrypt(JSON.stringify(tokenData), key).then(function(tokenR) {

@@ -24,6 +24,7 @@ errorHandler
 @note Created on 2018-06-02 by Saksham
 @note Updates :
   Saksham - 2018 06 05 - master - key not provided
+  Saksham - 2018 06 18 - master - rtk in refresh
 ###
 C = require './constants'
 
@@ -48,11 +49,12 @@ exports.tokenExpired = () ->
     message: "Token is expired"
   }
 
-# token should be expired
-exports.tokenRefresh = () ->
+# token should be refreshed
+exports.tokenRefresh = (rtk) ->
   {
     code: C.TOKEN_REFRESH_TIME
     message: "Token should be refreshed"
+    rtk: rtk
   }
 
 # invalid audience token
