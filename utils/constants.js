@@ -33,11 +33,11 @@
 
   exports.TOKEN_REFRESH_TIME = 4;
 
-  exports.INVALID_AUDIENCE = 5;
-
-  exports.KEY_NOT_PROVIDED = 6;
+  exports.KEY_NOT_PROVIDED = 5;
 
   exports.AUDIENCES_NOT_PROVIDED = 6;
+
+  exports.INVALID_AUDIENCE = 7;
 
 }).call(this);
 
