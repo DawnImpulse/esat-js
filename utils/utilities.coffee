@@ -8,6 +8,7 @@ utilities
      
 @note Created on 2018-06-18 by Saksham
 @note Updates :
+  Saksham - 2019 07 15 - master - typeOf
 ###
 
 exports.uuid = () ->
@@ -24,3 +25,22 @@ exports.uuid = () ->
   s[8] = s[13] = s[18] = s[23] = '-'
   uuid = s.join('')
   return uuid
+
+exports.typeOf = (data) ->
+  stringConstructor = 'test'.constructor
+  arrayConstructor = [].constructor
+  objectConstructor = {}.constructor
+  if data == null
+    "null"
+  else if data == undefined
+    "undefined"
+  else if data.constructor == stringConstructor
+    "string"
+  else if data.constructor == arrayConstructor
+    "array"
+  else if data.constructor == objectConstructor
+    "object"
+  else if Number.isInteger(data)
+    "number"
+  else
+    "unknown"

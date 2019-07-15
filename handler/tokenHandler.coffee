@@ -113,10 +113,13 @@ tokenVerification = (token, key) ->
         resolve tokenData
 # catch for decryption
     ).catch (error) ->
-      if(error.toString().indexOf("06065064") > -1)
-        reject errorH.invalidKey()
-      else
+
+      if(utils.typeOf(error) == "object" && error.code == 8)
+        reject error
+      else if(error.toString().indexOf("Invalid IV length") > -1)
         reject errorH.invalidToken()
+      else
+        reject errorH.invalidKey()
   )
 
 tokenRefresh = (token, key) ->

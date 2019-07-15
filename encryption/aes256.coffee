@@ -24,8 +24,13 @@ aes256
 @note Created on 2018-06-02 by Saksham
 @note Updates :
   Saksham - 2018 06 05 - master - minor fix in key/data
+  Saksham - 2019 07 15 - master - changed deprecated encryption method
 ###
 crypto = require 'crypto'
+handler = require '../utils/errorHandler'
+utils = require '../utils/utilities'
+
+IV_LENGTH = 16
 
 ###
 ----- EXPORTS -----
@@ -33,23 +38,35 @@ crypto = require 'crypto'
 
 ###
   Used to encrypt data with its key
-  @param KEY - encryption key
+  @param KEY - encryption key (must be 256 bits , 32 chars)
   @param data - data to be encrypted
   @param callback - in case of promise kindly don't provide this
 ###
 exports.encrypt = (data, key, callback) ->
   if(callback)
     encryptedData = encrypt(data, key)
-    callback(undefined, encryptedData)
+
+    # if not an error
+    if(utils.typeOf(encryptedData) == 'string')
+      callback(undefined, encryptedData)
+    else
+# here data is the error
+      callback(encryptedData, undefined)
   else
-    return new Promise((resolve, _)->
+    return new Promise((resolve, reject)->
       encryptedData = encrypt(data, key)
-      resolve(encryptedData)
+
+      # if not an error
+      if(utils.typeOf(encryptedData) == 'string')
+        resolve(encryptedData)
+      else
+# here data is the error
+        reject(encryptedData)
     )
 
 ###
   Used to decrypt data with its key
-  @param KEY - encryption key
+  @param KEY - encryption key (must be 256 bits , 32 chars)
   @param data - data to be decrypted
   @param callback - in case of promise kindly don't provide this
 ###
@@ -57,14 +74,26 @@ exports.decrypt = (data, key, callback) ->
   if(callback)
     try
       decryptedData = decrypt(data, key)
-      callback(undefined , decryptedData)
+      # if not an error
+      if(utils.typeOf(decryptedData) == 'string')
+        callback(undefined, decryptedData)
+      else
+# here data is the error
+        callback(decryptedData, undefined)
+# error decrypting
     catch error
-      callback(error, undefined )
+      callback(error, undefined)
   else
     return new Promise((resolve, reject)->
       try
         decryptedData = decrypt(data, key)
-        resolve(decryptedData)
+
+        # if not an error
+        if(utils.typeOf(decryptedData) == 'string')
+          resolve(decryptedData)
+        else
+# here data is the error
+          reject(decryptedData)
       catch error
         reject(error)
     )
@@ -75,15 +104,36 @@ exports.decrypt = (data, key, callback) ->
 
 # the encryption function
 encrypt = (data, key) ->
-  cipher = crypto.createCipher('aes256', key)
-  encrypted = cipher.update(data, 'utf8', 'hex')
-  encrypted += cipher.final('hex')
-  encrypted
+  try
+    iv = crypto.randomBytes(IV_LENGTH)
+    cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv)
+    encrypted = cipher.update(data)
+    encrypted = Buffer.concat([
+      encrypted
+      cipher.final()
+    ])
+    iv.toString('hex') + ':' + encrypted.toString('hex')
+  catch err
+    return handler.invalidKeyLength()
 
 # aes decryption function
 decrypt = (data, key) ->
-  decipher = crypto.createDecipher('aes256', key)
-  decrypted = decipher.update(data, 'hex', 'utf8')
-  decrypted += decipher.final('utf8')
-  decrypted
+  try
+    textParts = data.split(':')
+    iv = Buffer.from(textParts.shift(), 'hex')
+    encryptedText = Buffer.from(textParts.join(':'), 'hex')
+    decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key), iv)
+    decrypted = decipher.update(encryptedText)
+    decrypted = Buffer.concat([
+      decrypted
+      decipher.final()
+    ])
+    decrypted.toString()
+  catch err
+# if key error then return it
+    if(err.toString().indexOf("Invalid key length") > -1)
+      handler.invalidKeyLength()
+# throw other errors
+    else
+      throw err
 

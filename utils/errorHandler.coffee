@@ -25,6 +25,7 @@ errorHandler
 @note Updates :
   Saksham - 2018 06 05 - master - key not provided
   Saksham - 2018 06 18 - master - rtk in refresh
+  Saksham - 2019 07 15 - master - key invalid length
 ###
 C = require './constants'
 
@@ -76,4 +77,11 @@ exports.audiencesNotProvided = () ->
   {
     code: C.AUDIENCES_NOT_PROVIDED
     message: "audiences not provided"
+  }
+
+# invalid key length
+exports.invalidKeyLength = () ->
+  {
+    code: C.INVALID_KEY_LENGTH
+    message: 'Invalid key length'
   }

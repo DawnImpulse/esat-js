@@ -1,8 +1,11 @@
 {
   "name": "esat",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "Encrypted & Secure Authentication Token",
   "main": "index.js",
+  "scripts": {
+    "test": "mocha index.test.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DawnImpulse/esat.git"
@@ -13,12 +16,18 @@
     "esats",
     "web-token",
     "auth-token",
-    "authentication"
+    "authentication",
+    "jwt"
   ],
   "author": "DawnImpulse",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/DawnImpulse/esat/issues"
   },
-  "homepage": "https://github.com/DawnImpulse/esat#readme"
+  "homepage": "https://github.com/DawnImpulse/esat#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.1.4"
+  }
 }
